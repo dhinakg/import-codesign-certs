@@ -19,9 +19,9 @@ async function run(): Promise<void> {
 
     if (keychain === '') {
       // generate a keychain name
-      keychain = Math.random()
+      keychain = `import-codesign-certs-keychain-${Math.random()
         .toString(36)
-        .slice(2)
+        .slice(2)}`
     }
 
     if (p12Filepath === '' && p12FileBase64 === '') {
@@ -53,8 +53,8 @@ async function run(): Promise<void> {
       p12Filepath,
       p12Password
     )
-  } catch (error) {
-    core.setFailed(error.message)
+  } catch (error: unknown) {
+    core.setFailed((error as Error).message)
   }
 }
 
@@ -72,8 +72,8 @@ async function cleanup(): Promise<void> {
     }
 
     await security.deleteKeychain(keychain)
-  } catch (error) {
-    core.setFailed(error.message)
+  } catch (error: unknown) {
+    core.setFailed((error as Error).message)
   }
 }
 

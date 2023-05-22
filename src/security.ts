@@ -17,6 +17,9 @@ export async function installCertIntoTemporaryKeychain(
     }
   }
 
+  if (keychain === '') {
+    throw new Error('keychain must not be empty')
+  }
   if (keychain.endsWith('.keychain')) {
     throw new Error('keychain name should not end in .keychain')
   }
@@ -51,16 +54,31 @@ async function updateKeychainList(
   keychain: string,
   options?: ExecOptions
 ): Promise<void> {
-  const args: string[] = [
+  const listArgs: string[] = ['list-keychains', '-d', 'user']
+
+  const listResult = await exec.getExecOutput('security', listArgs, options)
+  if (listResult.exitCode !== 0) {
+    throw new Error(
+      `Unable to update keychain list: ${listResult.exitCode} ${listResult.stderr}`
+    )
+  }
+
+  const listOutput = listResult.stdout
+    .trim()
+    .split('\n')
+    .map(line => line.trim().replace(/"/g, ''))
+    .filter(line => line !== '')
+
+  const setArgs: string[] = [
     'list-keychains',
     '-d',
     'user',
     '-s',
     keychain,
-    'login.keychain'
+    ...listOutput
   ]
 
-  await exec.exec('security', args, options)
+  await exec.exec('security', setArgs, options)
 }
 
 /**
