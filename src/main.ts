@@ -10,12 +10,19 @@ async function run(): Promise<void> {
       throw new Error('Action requires macOS agent.')
     }
 
-    const keychain: string = core.getInput('keychain')
+    let keychain: string = core.getInput('keychain')
     const createKeychain: boolean = core.getInput('create-keychain') === 'true'
     let keychainPassword: string = core.getInput('keychain-password')
     let p12Filepath: string = core.getInput('p12-filepath')
     const p12FileBase64: string = core.getInput('p12-file-base64')
     const p12Password: string = core.getInput('p12-password')
+
+    if (keychain === '') {
+      // generate a keychain name
+      keychain = Math.random()
+        .toString(36)
+        .slice(2)
+    }
 
     if (p12Filepath === '' && p12FileBase64 === '') {
       throw new Error(
@@ -35,6 +42,7 @@ async function run(): Promise<void> {
       keychainPassword = Math.random().toString(36)
     }
 
+    core.saveState('keychain', keychain)
     core.setOutput('keychain-password', keychainPassword)
     core.setSecret(keychainPassword)
 
@@ -50,4 +58,27 @@ async function run(): Promise<void> {
   }
 }
 
-run()
+async function cleanup(): Promise<void> {
+  try {
+    if (os.platform() !== 'darwin') {
+      return
+    }
+
+    const keychain: string = core.getState('keychain')
+    const createKeychain: boolean = core.getInput('create-keychain') === 'true'
+
+    if (!createKeychain) {
+      return
+    }
+
+    await security.deleteKeychain(keychain)
+  } catch (error) {
+    core.setFailed(error.message)
+  }
+}
+
+if (!core.getState('isPost')) {
+  run()
+} else {
+  cleanup()
+}
