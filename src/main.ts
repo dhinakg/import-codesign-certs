@@ -77,8 +77,13 @@ async function cleanup(): Promise<void> {
     }
 
     await security.deleteKeychain(keychain)
-  } catch (error: unknown) {
-    core.setFailed((error as Error).message)
+  } catch (error) {
+    if (error instanceof Error) {
+      core.setFailed(error.message)
+    } else {
+      // eslint-disable-next-line i18n-text/no-en
+      core.setFailed(`Action failed with error ${error}`)
+    }
   }
 }
 
