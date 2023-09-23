@@ -53,8 +53,13 @@ async function run(): Promise<void> {
       p12Filepath,
       p12Password
     )
-  } catch (error: unknown) {
-    core.setFailed((error as Error).message)
+  } catch (error) {
+    if (error instanceof Error) {
+      core.setFailed(error.message)
+    } else {
+      // eslint-disable-next-line i18n-text/no-en
+      core.setFailed(`Action failed with error ${error}`)
+    }
   }
 }
 

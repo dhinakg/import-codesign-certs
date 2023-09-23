@@ -29,79 +29,72 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(2186));
 const os = __importStar(__nccwpck_require__(2037));
 const fs = __importStar(__nccwpck_require__(7147));
 const tmp = __importStar(__nccwpck_require__(8517));
 const security = __importStar(__nccwpck_require__(7546));
-function run() {
-    return __awaiter(this, void 0, void 0, function* () {
-        try {
-            if (os.platform() !== 'darwin') {
-                throw new Error('Action requires macOS agent.');
-            }
-            let keychain = core.getInput('keychain');
-            const createKeychain = core.getInput('create-keychain') === 'true';
-            let keychainPassword = core.getInput('keychain-password');
-            let p12Filepath = core.getInput('p12-filepath');
-            const p12FileBase64 = core.getInput('p12-file-base64');
-            const p12Password = core.getInput('p12-password');
-            if (keychain === '') {
-                // generate a keychain name
-                keychain = `import-codesign-certs-keychain-${Math.random()
-                    .toString(36)
-                    .slice(2)}`;
-            }
-            if (p12Filepath === '' && p12FileBase64 === '') {
-                throw new Error('At least one of p12-filepath or p12-file-base64 must be provided');
-            }
-            if (p12FileBase64 !== '') {
-                const buffer = Buffer.from(p12FileBase64, 'base64');
-                const tempFile = tmp.fileSync();
-                p12Filepath = tempFile.name;
-                fs.writeFileSync(p12Filepath, buffer);
-            }
-            if (keychainPassword === '') {
-                // generate a keychain password for the temporary keychain
-                keychainPassword = Math.random().toString(36);
-            }
-            core.saveState('keychain', keychain);
-            core.setOutput('keychain-password', keychainPassword);
-            core.setSecret(keychainPassword);
-            yield security.installCertIntoTemporaryKeychain(keychain, createKeychain, keychainPassword, p12Filepath, p12Password);
+async function run() {
+    try {
+        if (os.platform() !== 'darwin') {
+            throw new Error('Action requires macOS agent.');
         }
-        catch (error) {
+        let keychain = core.getInput('keychain');
+        const createKeychain = core.getInput('create-keychain') === 'true';
+        let keychainPassword = core.getInput('keychain-password');
+        let p12Filepath = core.getInput('p12-filepath');
+        const p12FileBase64 = core.getInput('p12-file-base64');
+        const p12Password = core.getInput('p12-password');
+        if (keychain === '') {
+            // generate a keychain name
+            keychain = `import-codesign-certs-keychain-${Math.random()
+                .toString(36)
+                .slice(2)}`;
+        }
+        if (p12Filepath === '' && p12FileBase64 === '') {
+            throw new Error('At least one of p12-filepath or p12-file-base64 must be provided');
+        }
+        if (p12FileBase64 !== '') {
+            const buffer = Buffer.from(p12FileBase64, 'base64');
+            const tempFile = tmp.fileSync();
+            p12Filepath = tempFile.name;
+            fs.writeFileSync(p12Filepath, buffer);
+        }
+        if (keychainPassword === '') {
+            // generate a keychain password for the temporary keychain
+            keychainPassword = Math.random().toString(36);
+        }
+        core.saveState('keychain', keychain);
+        core.setOutput('keychain-password', keychainPassword);
+        core.setSecret(keychainPassword);
+        await security.installCertIntoTemporaryKeychain(keychain, createKeychain, keychainPassword, p12Filepath, p12Password);
+    }
+    catch (error) {
+        if (error instanceof Error) {
             core.setFailed(error.message);
         }
-    });
+        else {
+            // eslint-disable-next-line i18n-text/no-en
+            core.setFailed(`Action failed with error ${error}`);
+        }
+    }
 }
-function cleanup() {
-    return __awaiter(this, void 0, void 0, function* () {
-        try {
-            if (os.platform() !== 'darwin') {
-                return;
-            }
-            const keychain = core.getState('keychain');
-            const createKeychain = core.getInput('create-keychain') === 'true';
-            if (!createKeychain) {
-                return;
-            }
-            yield security.deleteKeychain(keychain);
+async function cleanup() {
+    try {
+        if (os.platform() !== 'darwin') {
+            return;
         }
-        catch (error) {
-            core.setFailed(error.message);
+        const keychain = core.getState('keychain');
+        const createKeychain = core.getInput('create-keychain') === 'true';
+        if (!createKeychain) {
+            return;
         }
-    });
+        await security.deleteKeychain(keychain);
+    }
+    catch (error) {
+        core.setFailed(error.message);
+    }
 }
 if (!core.getState('isPost')) {
     run();
@@ -141,53 +134,42 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.deleteKeychain = exports.installCertIntoTemporaryKeychain = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const exec = __importStar(__nccwpck_require__(1514));
-function installCertIntoTemporaryKeychain(keychain, setupKeychain, keychainPassword, p12FilePath, p12Password) {
-    return __awaiter(this, void 0, void 0, function* () {
-        let output = '';
-        const options = {};
-        options.listeners = {
-            stdout: (data) => {
-                output += data.toString();
-            }
-        };
-        if (keychain === '') {
-            throw new Error('keychain must not be empty');
+async function installCertIntoTemporaryKeychain(keychain, setupKeychain, keychainPassword, p12FilePath, p12Password) {
+    let output = '';
+    const options = {};
+    options.listeners = {
+        stdout: (data) => {
+            output += data.toString();
         }
-        if (keychain.endsWith('.keychain')) {
-            throw new Error('keychain name should not end in .keychain');
-        }
-        if (p12FilePath === '') {
-            throw new Error('p12FilePath must not be empty');
-        }
-        if (p12Password === '') {
-            throw new Error('p12Password must not be empty');
-        }
-        if (keychainPassword === '') {
-            throw new Error('keychainPassword must not be empty');
-        }
-        const tempKeychain = `${keychain}.keychain`;
-        if (setupKeychain) {
-            yield createKeychain(tempKeychain, keychainPassword, options);
-        }
-        yield unlockKeychain(tempKeychain, keychainPassword, options);
-        yield importPkcs12(tempKeychain, p12FilePath, p12Password, options);
-        yield setPartitionList(tempKeychain, keychainPassword);
-        yield updateKeychainList(tempKeychain, options);
-        core.setOutput('security-response', output);
-    });
+    };
+    if (keychain === '') {
+        throw new Error('keychain must not be empty');
+    }
+    if (keychain.endsWith('.keychain')) {
+        throw new Error('keychain name should not end in .keychain');
+    }
+    if (p12FilePath === '') {
+        throw new Error('p12FilePath must not be empty');
+    }
+    if (p12Password === '') {
+        throw new Error('p12Password must not be empty');
+    }
+    if (keychainPassword === '') {
+        throw new Error('keychainPassword must not be empty');
+    }
+    const tempKeychain = `${keychain}.keychain`;
+    if (setupKeychain) {
+        await createKeychain(tempKeychain, keychainPassword, options);
+    }
+    await unlockKeychain(tempKeychain, keychainPassword, options);
+    await importPkcs12(tempKeychain, p12FilePath, p12Password, options);
+    await setPartitionList(tempKeychain, keychainPassword);
+    await updateKeychainList(tempKeychain, options);
+    core.setOutput('security-response', output);
 }
 exports.installCertIntoTemporaryKeychain = installCertIntoTemporaryKeychain;
 /**
@@ -195,41 +177,37 @@ exports.installCertIntoTemporaryKeychain = installCertIntoTemporaryKeychain;
  * @param keychain The name of the keychain to include in list.
  * @param options Execution options (optional)
  */
-function updateKeychainList(keychain, options) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const listArgs = ['list-keychains', '-d', 'user'];
-        const listResult = yield exec.getExecOutput('security', listArgs, options);
-        if (listResult.exitCode !== 0) {
-            throw new Error(`Unable to update keychain list: ${listResult.exitCode} ${listResult.stderr}`);
-        }
-        const listOutput = listResult.stdout
-            .trim()
-            .split('\n')
-            .map(line => line.trim().replace(/"/g, ''))
-            .filter(line => line !== '');
-        const setArgs = [
-            'list-keychains',
-            '-d',
-            'user',
-            '-s',
-            keychain,
-            ...listOutput
-        ];
-        yield exec.exec('security', setArgs, options);
-    });
+async function updateKeychainList(keychain, options) {
+    const listArgs = ['list-keychains', '-d', 'user'];
+    const listResult = await exec.getExecOutput('security', listArgs, options);
+    if (listResult.exitCode !== 0) {
+        throw new Error(`Unable to update keychain list: ${listResult.exitCode} ${listResult.stderr}`);
+    }
+    const listOutput = listResult.stdout
+        .trim()
+        .split('\n')
+        .map(line => line.trim().replace(/"/g, ''))
+        .filter(line => line !== '');
+    const setArgs = [
+        'list-keychains',
+        '-d',
+        'user',
+        '-s',
+        keychain,
+        ...listOutput
+    ];
+    await exec.exec('security', setArgs, options);
 }
 /**
  * Delete the specified keychain
  * @param keychain The name of the keychain to delete.
  * @param options Execution options (optional)
  */
-function deleteKeychain(keychain, options) {
-    return __awaiter(this, void 0, void 0, function* () {
-        if (keychain.endsWith('.keychain')) {
-            throw new Error('keychain name should not end in .keychain');
-        }
-        yield exec.exec('security', ['delete-keychain', `${keychain}.keychain`], options);
-    });
+async function deleteKeychain(keychain, options) {
+    if (keychain.endsWith('.keychain')) {
+        throw new Error('keychain name should not end in .keychain');
+    }
+    await exec.exec('security', ['delete-keychain', `${keychain}.keychain`], options);
 }
 exports.deleteKeychain = deleteKeychain;
 /**
@@ -239,28 +217,26 @@ exports.deleteKeychain = deleteKeychain;
  * @param p12Password The password used to decrypt the .p12 file.
  * @param options Execution options (optional)
  */
-function importPkcs12(keychain, p12FilePath, p12Password, options) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const importArgs = [
-            'import',
-            p12FilePath,
-            '-k',
-            keychain,
-            '-f',
-            'pkcs12',
-            // This option allows any application to read keys.
-            // This would be insecure if the keychain was retained but GitHub action
-            // VMs are thrown away after use.
-            '-A',
-            '-T',
-            '/usr/bin/codesign',
-            '-T',
-            '/usr/bin/security',
-            '-P',
-            p12Password
-        ];
-        yield exec.exec('security', importArgs, options);
-    });
+async function importPkcs12(keychain, p12FilePath, p12Password, options) {
+    const importArgs = [
+        'import',
+        p12FilePath,
+        '-k',
+        keychain,
+        '-f',
+        'pkcs12',
+        // This option allows any application to read keys.
+        // This would be insecure if the keychain was retained but GitHub action
+        // VMs are thrown away after use.
+        '-A',
+        '-T',
+        '/usr/bin/codesign',
+        '-T',
+        '/usr/bin/security',
+        '-P',
+        p12Password
+    ];
+    await exec.exec('security', importArgs, options);
 }
 /**
  * Sets the partition list for the specified keychain.
@@ -268,18 +244,16 @@ function importPkcs12(keychain, p12FilePath, p12Password, options) {
  * @param password The keychain password.
  * @param options Execution options (optional)
  */
-function setPartitionList(keychain, password, options) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const args = [
-            'set-key-partition-list',
-            '-S',
-            'apple-tool:,apple:',
-            '-k',
-            password,
-            keychain
-        ];
-        yield exec.exec('security', args, options);
-    });
+async function setPartitionList(keychain, password, options) {
+    const args = [
+        'set-key-partition-list',
+        '-S',
+        'apple-tool:,apple:',
+        '-k',
+        password,
+        keychain
+    ];
+    await exec.exec('security', args, options);
 }
 /**
  * Unlock the specified Keychain
@@ -287,11 +261,9 @@ function setPartitionList(keychain, password, options) {
  * @param password THe password to unlock with
  * @param options Execution options (optional)
  */
-function unlockKeychain(keychain, password, options) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const args = ['unlock-keychain', '-p', password, keychain];
-        yield exec.exec('security', args, options);
-    });
+async function unlockKeychain(keychain, password, options) {
+    const args = ['unlock-keychain', '-p', password, keychain];
+    await exec.exec('security', args, options);
 }
 /**
  * Creat a keychain with the specified name
@@ -299,19 +271,17 @@ function unlockKeychain(keychain, password, options) {
  * @param password THe password to unlock with.
  * @param options Execution options (optional)
  */
-function createKeychain(keychain, password, options) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const createArgs = ['create-keychain', '-p', password, keychain];
-        yield exec.exec('security', createArgs, options);
-        // Set automatic keychain lock timeout to 6 hours.
-        const setSettingsArgs = [
-            'set-keychain-settings',
-            '-lut',
-            '21600',
-            keychain
-        ];
-        yield exec.exec('security', setSettingsArgs, options);
-    });
+async function createKeychain(keychain, password, options) {
+    const createArgs = ['create-keychain', '-p', password, keychain];
+    await exec.exec('security', createArgs, options);
+    // Set automatic keychain lock timeout to 6 hours.
+    const setSettingsArgs = [
+        'set-keychain-settings',
+        '-lut',
+        '21600',
+        keychain
+    ];
+    await exec.exec('security', setSettingsArgs, options);
 }
 
 
@@ -874,7 +844,7 @@ class OidcClient {
                 .catch(error => {
                 throw new Error(`Failed to get ID Token. \n 
         Error Code : ${error.statusCode}\n 
-        Error Message: ${error.result.message}`);
+        Error Message: ${error.message}`);
             });
             const id_token = (_a = res.result) === null || _a === void 0 ? void 0 : _a.value;
             if (!id_token) {
