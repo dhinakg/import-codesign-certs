@@ -41,6 +41,7 @@ export async function installCertIntoTemporaryKeychain(
   await importPkcs12(tempKeychain, p12FilePath, p12Password, options)
   await setPartitionList(tempKeychain, keychainPassword)
   await updateKeychainList(tempKeychain, options)
+  await unlockKeychain(tempKeychain, keychainPassword, options)
 
   core.setOutput('security-response', output)
 }
@@ -188,11 +189,6 @@ async function createKeychain(
   await exec.exec('security', createArgs, options)
 
   // Set automatic keychain lock timeout to 6 hours.
-  const setSettingsArgs: string[] = [
-    'set-keychain-settings',
-    '-lut',
-    '21600',
-    keychain
-  ]
+  const setSettingsArgs: string[] = ['set-keychain-settings', keychain]
   await exec.exec('security', setSettingsArgs, options)
 }

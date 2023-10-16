@@ -93,7 +93,13 @@ async function cleanup() {
         await security.deleteKeychain(keychain);
     }
     catch (error) {
-        core.setFailed(error.message);
+        if (error instanceof Error) {
+            core.setFailed(error.message);
+        }
+        else {
+            // eslint-disable-next-line i18n-text/no-en
+            core.setFailed(`Action failed with error ${error}`);
+        }
     }
 }
 if (!core.getState('isPost')) {
@@ -169,6 +175,7 @@ async function installCertIntoTemporaryKeychain(keychain, setupKeychain, keychai
     await importPkcs12(tempKeychain, p12FilePath, p12Password, options);
     await setPartitionList(tempKeychain, keychainPassword);
     await updateKeychainList(tempKeychain, options);
+    await unlockKeychain(tempKeychain, keychainPassword, options);
     core.setOutput('security-response', output);
 }
 exports.installCertIntoTemporaryKeychain = installCertIntoTemporaryKeychain;
@@ -275,12 +282,7 @@ async function createKeychain(keychain, password, options) {
     const createArgs = ['create-keychain', '-p', password, keychain];
     await exec.exec('security', createArgs, options);
     // Set automatic keychain lock timeout to 6 hours.
-    const setSettingsArgs = [
-        'set-keychain-settings',
-        '-lut',
-        '21600',
-        keychain
-    ];
+    const setSettingsArgs = ['set-keychain-settings', keychain];
     await exec.exec('security', setSettingsArgs, options);
 }
 
