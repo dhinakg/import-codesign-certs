@@ -21,7 +21,6 @@
       "@typescript-eslint/naming-convention": "error",
       "@typescript-eslint/consistent-type-definitions": "error",
       "@typescript-eslint/explicit-function-return-type": ["error", {"allowExpressions": true}],
-      "@typescript-eslint/func-call-spacing": ["error", "never"],
       "@typescript-eslint/no-array-constructor": "error",
       "@typescript-eslint/no-empty-interface": "error",
       "@typescript-eslint/no-explicit-any": "error",
@@ -44,8 +43,6 @@
       "@typescript-eslint/require-array-sort-compare": "error",
       "@typescript-eslint/restrict-plus-operands": "error",
       "semi": "off",
-      "@typescript-eslint/semi": ["error", "never"],
-      "@typescript-eslint/type-annotation-spacing": "error",
       "@typescript-eslint/unbound-method": "error"
     },
     "env": {
